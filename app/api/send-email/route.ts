@@ -1,19 +1,16 @@
 // File: app/api/send-email/route.ts
-// Anti-Spam Email Sender for Next.js (Sleekhost Optimized)
+// Email Sender for Next.js using Resend (Vercel Compatible)
 
 import { NextRequest, NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 // =============================================
-// CONFIGURATION (Sleekhost SMTP)
-// From cPanel: Secure SSL/TLS Settings (Recommended)
+// RESEND CONFIGURATION
+// Get your API key from: https://resend.com
 // =============================================
+const resend = new Resend(process.env.RESEND_API_KEY);
 const TO_EMAIL = "info@dreamindiatravel.com";
-const FROM_EMAIL = "info@dreamindiatravel.com"; // Your actual email account in Sleekhost
-const SMTP_HOST = "mail.dreamindiatravel.com"; // Outgoing Server from cPanel
-const SMTP_PORT = 465; // SSL Port (as shown in cPanel)
-const SMTP_USER = "info@dreamindiatravel.com"; // Your email from cPanel
-const SMTP_PASSWORD = "Sandeep@01"; // Replace with your actual email password
+const FROM_EMAIL = "onboarding@resend.dev"; // Must be verified in Resend
 
 // =============================================
 // CORS & HEADERS
@@ -60,7 +57,7 @@ export async function POST(request: NextRequest) {
     const subject = data._subject || "New Website Inquiry";
 
     // =============================================
-    // CLEAN DATA FOR BODY (PHP style)
+    // CLEAN DATA FOR BODY
     // =============================================
     let messageBody = "New Lead Details:\n";
     messageBody += "---------------------------------\n";
@@ -88,103 +85,65 @@ export async function POST(request: NextRequest) {
     messageBody += "---------------------------------\n";
 
     // =============================================
-    // SETUP NODEMAILER WITH SLEEKHOST
-    // =============================================
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: true, // true for port 465 (SSL)
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASSWORD,
-      },
-      tls: {
-        rejectUnauthorized: false, // Allow self-signed certs
-      },
-    });
-
-    // =============================================
-    // PREPARE EMAIL OPTIONS (Anti-spam headers)
+    // PREPARE EMAIL
     // =============================================
     const userEmail =
       data.Email_Address || data.email || data.user_email || "";
 
-    // =============================================
-    // HANDLE FILE ATTACHMENTS (if any)
-    // =============================================
-    const attachments: any[] = [];
+    const htmlContent = `
+      <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;">
+        <div style="background-color: white; padding: 20px; border-radius: 8px;">
+          <h2 style="color: #004381; margin-bottom: 20px;">New Lead Details</h2>
+          <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
+          <pre style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 14px;">
+${messageBody}
+          </pre>
+          <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
+          ${
+            userEmail
+              ? `<p style="color: #666; font-size: 12px;">
+            <strong>Reply-To:</strong> ${userEmail}
+          </p>`
+              : ""
+          }
+          <p style="color: #999; font-size: 11px; margin-top: 20px;">
+            This email was sent from Dream India Travel contact form.
+          </p>
+        </div>
+      </div>
+    `;
 
-    // Check for file uploads in form data
-    if (data.resume instanceof File || data.Resume instanceof File) {
-      const file = data.resume || data.Resume;
-      const buffer = Buffer.from(await file.arrayBuffer());
-      attachments.push({
-        filename: file.name,
-        content: buffer,
-        contentType: file.type,
-      });
-    }
+    console.log("Attempting to send email via Resend:", {
+      to: TO_EMAIL,
+      from: FROM_EMAIL,
+      subject: subject,
+      replyTo: userEmail || TO_EMAIL,
+    });
 
-    // Build mail options with proper typing using 'any' to allow dynamic properties
-    const mailOptions: any = {
-      from: `Dream India Travel <${FROM_EMAIL}>`,
+    // =============================================
+    // SEND EMAIL VIA RESEND
+    // =============================================
+    const response = await resend.emails.send({
+      from: FROM_EMAIL,
       to: TO_EMAIL,
       replyTo: userEmail || TO_EMAIL,
       subject: subject,
+      html: htmlContent,
       text: messageBody,
-      html: `
-        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;">
-          <div style="background-color: white; padding: 20px; border-radius: 8px;">
-            <h2 style="color: #004381; margin-bottom: 20px;">New Lead Details</h2>
-            <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
-            <pre style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 14px;">
-${messageBody}
-            </pre>
-            <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
-            ${
-              userEmail
-                ? `<p style="color: #666; font-size: 12px;">
-              <strong>Reply-To:</strong> ${userEmail}
-            </p>`
-                : ""
-            }
-            <p style="color: #999; font-size: 11px; margin-top: 20px;">
-              This email was sent from Dream India Travel contact form.
-            </p>
-          </div>
-        </div>
-      `,
-      headers: {
-        "X-Mailer": `NextJS/14.0`,
-        "Return-Path": FROM_EMAIL,
-        "Sender": FROM_EMAIL,
-        "X-Priority": "3",
-      },
-    };
-
-    if (attachments.length > 0) {
-      mailOptions.attachments = attachments;
-    }
-
-    // =============================================
-    // SEND EMAIL
-    // =============================================
-    console.log("Attempting to send email with SMTP:", {
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      from: FROM_EMAIL,
-      to: TO_EMAIL,
     });
 
-    const info = await transporter.sendMail(mailOptions);
+    if (response.error) {
+      console.error("Resend Error:", response.error);
+      throw new Error(response.error.message || "Failed to send email");
+    }
 
-    console.log("Email sent successfully:", info.response);
+    console.log("Email sent successfully:", response.data);
 
     return NextResponse.json(
-      { 
-        status: "success", 
-        messageId: info.messageId,
-        message: "Email sent successfully to info@dreamindiatravel.com"
+      {
+        status: "success",
+        messageId: response.data?.id,
+        message: "Email sent successfully to info@dreamindiatravel.com",
       },
       { status: 200, headers }
     );
@@ -197,7 +156,8 @@ ${messageBody}
       {
         status: "error",
         message: errorMessage,
-        debug: process.env.NODE_ENV === "development" ? errorMessage : undefined,
+        debug:
+          process.env.NODE_ENV === "development" ? errorMessage : undefined,
       },
       { status: 500, headers: { "Access-Control-Allow-Origin": "*" } }
     );
