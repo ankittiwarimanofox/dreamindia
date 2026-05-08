@@ -109,41 +109,41 @@ export async function POST(request: NextRequest) {
     const userEmail =
       data.Email_Address || data.email || data.user_email || "";
 
-    const mailOptions: nodemailer.SendMailOptions = {
-  from: `Dream India Travel <${FROM_EMAIL}>`,
-  to: TO_EMAIL,
-  replyTo: userEmail || TO_EMAIL,
-  subject: subject,
-  text: messageBody,
-  html: `
-    <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;">
-      <div style="background-color: white; padding: 20px; border-radius: 8px;">
-        <h2 style="color: #004381; margin-bottom: 20px;">New Lead Details</h2>
-        <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
-        <pre style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 14px;">
+    const mailOptions = {
+      from: `Dream India Travel <${FROM_EMAIL}>`,
+      to: TO_EMAIL,
+      replyTo: userEmail || TO_EMAIL,
+      subject: subject,
+      text: messageBody,
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;">
+          <div style="background-color: white; padding: 20px; border-radius: 8px;">
+            <h2 style="color: #004381; margin-bottom: 20px;">New Lead Details</h2>
+            <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
+            <pre style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 14px;">
 ${messageBody}
-        </pre>
-        <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
-        ${
-          userEmail
-            ? `<p style="color: #666; font-size: 12px;">
-          <strong>Reply-To:</strong> ${userEmail}
-        </p>`
-            : ""
-        }
-        <p style="color: #999; font-size: 11px; margin-top: 20px;">
-          This email was sent from Dream India Travel contact form.
-        </p>
-      </div>
-    </div>
-  `,
-  headers: {
-    "X-Mailer": `NextJS/14.0`,
-    "Return-Path": FROM_EMAIL,
-    Sender: FROM_EMAIL,
-    "X-Priority": "3",
-  },
-};
+            </pre>
+            <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
+            ${
+              userEmail
+                ? `<p style="color: #666; font-size: 12px;">
+              <strong>Reply-To:</strong> ${userEmail}
+            </p>`
+                : ""
+            }
+            <p style="color: #999; font-size: 11px; margin-top: 20px;">
+              This email was sent from Dream India Travel contact form.
+            </p>
+          </div>
+        </div>
+      `,
+      headers: {
+        "X-Mailer": `NextJS/14.0`,
+        "Return-Path": FROM_EMAIL,
+        "Sender": FROM_EMAIL,
+        "X-Priority": "3",
+      },
+    };
 
     // =============================================
     // HANDLE FILE ATTACHMENTS (if any)
