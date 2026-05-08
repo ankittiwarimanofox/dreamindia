@@ -4,16 +4,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
-// =============================================
-// RESEND CONFIGURATION
-// =============================================
 const resend = new Resend(process.env.RESEND_API_KEY);
 const TO_EMAIL = "info@dreamindiatravel.com";
 const FROM_EMAIL = "onboarding@resend.dev";
 
-// =============================================
-// CORS & HEADERS
-// =============================================
 export async function OPTIONS(request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
@@ -27,26 +21,12 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Validate API Key
-    if (!process.env.RESEND_API_KEY) {
-      console.error('❌ RESEND_API_KEY is not set in environment variables');
-      return NextResponse.json(
-        {
-          status: "error",
-          message: "Email service not configured. Please contact administrator.",
-        },
-        { status: 500, headers: { "Access-Control-Allow-Origin": "*" } }
-      );
-    }
-
-    // Handle CORS
     const headers = {
       "Access-Control-Allow-Origin": "*",
       "Content-Type": "application/json",
     };
 
-    // Get form data
-    let data: Record<string, any> = {};
+    let data: Record<string, string> = {};
     const contentType = request.headers.get("content-type");
 
     if (contentType?.includes("application/json")) {
@@ -60,21 +40,17 @@ export async function POST(request: NextRequest) {
     } else if (contentType?.includes("multipart/form-data")) {
       const formData = await request.formData();
       formData.forEach((value, key) => {
-        data[key] = value;
+        data[key] = String(value);
       });
     }
 
-    // Get subject
     const subject = data._subject || "New Website Inquiry";
 
-    // =============================================
-    // CLEAN DATA FOR BODY
-    // =============================================
     let messageBody = "New Lead Details:\n";
     messageBody += "---------------------------------\n";
 
-    for (const [key, value] of Object.entries(data)) {
-      if (typeof key === "string" && key.startsWith("_")) continue;
+    Object.entries(data).forEach(([key, value]) => {
+      if (key.startsWith("_")) return;
 
       const cleanKey = key
         .replace(/_/g, " ")
@@ -82,51 +58,25 @@ export async function POST(request: NextRequest) {
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
 
-      let cleanValue = "";
-      if (Array.isArray(value)) {
-        cleanValue = value.join(", ");
-      } else if (typeof value === "string") {
-        cleanValue = value;
-      } else {
-        cleanValue = String(value);
-      }
-
-      messageBody += `${cleanKey}: ${cleanValue}\n`;
-    }
+      messageBody += `${cleanKey}: ${String(value)}\n`;
+    });
     messageBody += "---------------------------------\n";
 
-    // =============================================
-    // PREPARE EMAIL
-    // =============================================
-    const userEmail =
-      data.Email_Address || data.email || data.user_email || "";
+    const userEmail = data.email || data.Email_Address || data.user_email || "";
 
     const htmlContent = `
       <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;">
         <div style="background-color: white; padding: 20px; border-radius: 8px;">
           <h2 style="color: #004381; margin-bottom: 20px;">New Lead Details</h2>
           <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
-          <pre style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 14px;">
-${messageBody}
-          </pre>
+          <pre style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 14px;">${messageBody}</pre>
           <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
-          ${
-            userEmail
-              ? `<p style="color: #666; font-size: 12px;">
-            <strong>Reply-To:</strong> ${userEmail}
-          </p>`
-              : ""
-          }
-          <p style="color: #999; font-size: 11px; margin-top: 20px;">
-            This email was sent from Dream India Travel contact form.
-          </p>
+          ${userEmail ? `<p style="color: #666; font-size: 12px;"><strong>Reply-To:</strong> ${userEmail}</p>` : ""}
+          <p style="color: #999; font-size: 11px; margin-top: 20px;">This email was sent from Dream India Travel contact form.</p>
         </div>
       </div>
     `;
 
-    // =============================================
-    // SEND EMAIL VIA RESEND
-    // =============================================
     const response = await resend.emails.send({
       from: FROM_EMAIL,
       to: TO_EMAIL,
@@ -136,13 +86,9 @@ ${messageBody}
       text: messageBody,
     });
 
-    // Handle Resend response errors
     if (response.error) {
-      console.error("❌ Resend Error:", response.error);
       throw new Error(response.error.message || "Failed to send email");
     }
-
-    console.log("✅ Email sent successfully:", response.data?.id);
 
     return NextResponse.json(
       {
@@ -153,8 +99,8 @@ ${messageBody}
       { status: 200, headers }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
-    console.error("❌ Email Error:", errorMessage);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error("Email Error:", errorMessage);
 
     return NextResponse.json(
       {
