@@ -109,7 +109,24 @@ export async function POST(request: NextRequest) {
     const userEmail =
       data.Email_Address || data.email || data.user_email || "";
 
-    const mailOptions = {
+    // =============================================
+    // HANDLE FILE ATTACHMENTS (if any)
+    // =============================================
+    const attachments: any[] = [];
+
+    // Check for file uploads in form data
+    if (data.resume instanceof File || data.Resume instanceof File) {
+      const file = data.resume || data.Resume;
+      const buffer = Buffer.from(await file.arrayBuffer());
+      attachments.push({
+        filename: file.name,
+        content: buffer,
+        contentType: file.type,
+      });
+    }
+
+    // Build mail options with proper typing using 'any' to allow dynamic properties
+    const mailOptions: any = {
       from: `Dream India Travel <${FROM_EMAIL}>`,
       to: TO_EMAIL,
       replyTo: userEmail || TO_EMAIL,
@@ -144,22 +161,6 @@ ${messageBody}
         "X-Priority": "3",
       },
     };
-
-    // =============================================
-    // HANDLE FILE ATTACHMENTS (if any)
-    // =============================================
-    const attachments: any[] = [];
-
-    // Check for file uploads in form data
-    if (data.resume instanceof File || data.Resume instanceof File) {
-      const file = data.resume || data.Resume;
-      const buffer = Buffer.from(await file.arrayBuffer());
-      attachments.push({
-        filename: file.name,
-        content: buffer,
-        contentType: file.type,
-      });
-    }
 
     if (attachments.length > 0) {
       mailOptions.attachments = attachments;
