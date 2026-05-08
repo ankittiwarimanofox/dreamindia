@@ -1,51 +1,26 @@
-// File: app/api/send-email/route.ts
-// Email Sender for Next.js 16 using Resend (Vercel Compatible)
-
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const TO_EMAIL = "info@dreamindiatravel.com";
-const FROM_EMAIL = "onboarding@resend.dev";
-
-export async function OPTIONS(request: NextRequest) {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      "Access-Control-Allow-Origin": "*",
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type",
-    },
-  });
-}
 
 export async function POST(request: NextRequest) {
   try {
-    const headers = {
-      "Access-Control-Allow-Origin": "*",
-      "Content-Type": "application/json",
-    };
-
     let data: Record<string, string> = {};
-    const contentType = request.headers.get("content-type") || "";
-
-    if (contentType.includes("application/json")) {
-      const json = await request.json();
-      data = json;
-    } else if (contentType.includes("application/x-www-form-urlencoded")) {
+    
+    try {
+      data = await request.json();
+    } catch {
       const text = await request.text();
       const params = new URLSearchParams(text);
       params.forEach((value, key) => {
         data[key] = value;
       });
-    } else if (contentType.includes("multipart/form-data")) {
-      const formData = await request.formData();
-      formData.forEach((value, key) => {
-        data[key] = String(value);
-      });
     }
 
     const subject = data._subject || "New Website Inquiry";
+    const userEmail = data.email || data.Email_Address || "";
+    const TO_EMAIL = "info@dreamindiatravel.com";
+    const FROM_EMAIL = "onboarding@resend.dev";
 
     let messageBody = "New Lead Details:\n";
     messageBody += "---------------------------------\n";
@@ -56,64 +31,41 @@ export async function POST(request: NextRequest) {
       const cleanKey = key
         .replace(/_/g, " ")
         .split(" ")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(" ");
 
-      messageBody += `${cleanKey}: ${String(value)}\n`;
+      messageBody += `${cleanKey}: ${value}\n`;
     }
     messageBody += "---------------------------------\n";
 
-    const userEmail = data.email || data.Email_Address || data.user_email || "";
-
-    const htmlContent = `
-      <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f5f5f5;">
-        <div style="background-color: white; padding: 20px; border-radius: 8px;">
-          <h2 style="color: #004381; margin-bottom: 20px;">New Lead Details</h2>
-          <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
-          <pre style="background-color: #f9f9f9; padding: 15px; border-radius: 4px; overflow-x: auto; font-size: 14px;">${messageBody}</pre>
-          <hr style="border: none; border-top: 2px solid #C38E2D; margin: 20px 0;">
-          ${userEmail ? `<p style="color: #666; font-size: 12px;"><strong>Reply-To:</strong> ${userEmail}</p>` : ""}
-          <p style="color: #999; font-size: 11px; margin-top: 20px;">This email was sent from Dream India Travel contact form.</p>
-        </div>
-      </div>
-    `;
-
-    console.log("🚀 Sending email to:", TO_EMAIL);
-    
-    const response = await resend.emails.send({
+    const emailResult = await resend.emails.send({
       from: FROM_EMAIL,
       to: TO_EMAIL,
       replyTo: userEmail || TO_EMAIL,
       subject: subject,
-      html: htmlContent,
+      html: `<pre>${messageBody}</pre>`,
       text: messageBody,
     });
 
-    if (response.error) {
-      console.error("❌ Resend error:", response.error);
-      throw new Error(response.error.message || "Failed to send email");
+    if (emailResult.error) {
+      return NextResponse.json(
+        { status: "error", message: emailResult.error.message },
+        { status: 500 }
+      );
     }
-
-    console.log("✅ Email sent successfully!");
 
     return NextResponse.json(
       {
         status: "success",
-        messageId: response.data?.id,
         message: "Email sent successfully to info@dreamindiatravel.com",
       },
-      { status: 200, headers }
+      { status: 200 }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("❌ Email error:", errorMessage);
-
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      {
-        status: "error",
-        message: errorMessage,
-      },
-      { status: 500, headers: { "Access-Control-Allow-Origin": "*" } }
+      { status: "error", message },
+      { status: 500 }
     );
   }
 }
