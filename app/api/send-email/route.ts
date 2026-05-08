@@ -5,17 +5,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 
 // =============================================
-// RESEND CONFIGURATION WITH VALIDATION
+// RESEND CONFIGURATION
 // =============================================
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
-
-// Validate API key exists
-if (!RESEND_API_KEY) {
-  console.error('❌ RESEND_API_KEY environment variable is NOT set!');
-  console.error('Add it to Vercel Dashboard: Settings → Environment Variables');
-}
-
-const resend = new Resend(RESEND_API_KEY || "dummy-key-for-validation");
+const resend = new Resend(process.env.RESEND_API_KEY);
 const TO_EMAIL = "info@dreamindiatravel.com";
 const FROM_EMAIL = "onboarding@resend.dev";
 
@@ -35,19 +27,15 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // ❌ CHECK IF API KEY IS SET
-    if (!RESEND_API_KEY) {
-      console.error('Missing RESEND_API_KEY in environment variables');
+    // Validate API Key
+    if (!process.env.RESEND_API_KEY) {
+      console.error('❌ RESEND_API_KEY is not set in environment variables');
       return NextResponse.json(
         {
           status: "error",
           message: "Email service not configured. Please contact administrator.",
-          code: "MISSING_API_KEY"
         },
-        { 
-          status: 500, 
-          headers: { "Access-Control-Allow-Origin": "*" } 
-        }
+        { status: 500, headers: { "Access-Control-Allow-Origin": "*" } }
       );
     }
 
@@ -136,13 +124,6 @@ ${messageBody}
       </div>
     `;
 
-    console.log("📧 Attempting to send email via Resend:", {
-      to: TO_EMAIL,
-      from: FROM_EMAIL,
-      subject: subject,
-      replyTo: userEmail || TO_EMAIL,
-    });
-
     // =============================================
     // SEND EMAIL VIA RESEND
     // =============================================
@@ -155,39 +136,30 @@ ${messageBody}
       text: messageBody,
     });
 
-    // Check for errors in response
+    // Handle Resend response errors
     if (response.error) {
-      console.error("❌ Resend API Error:", response.error);
-      throw new Error(response.error.message || "Failed to send email via Resend");
+      console.error("❌ Resend Error:", response.error);
+      throw new Error(response.error.message || "Failed to send email");
     }
 
-    if (!response.data?.id) {
-      console.error("❌ No message ID returned from Resend");
-      throw new Error("Email sent but no confirmation received");
-    }
-
-    console.log("✅ Email sent successfully:", response.data.id);
+    console.log("✅ Email sent successfully:", response.data?.id);
 
     return NextResponse.json(
       {
         status: "success",
-        messageId: response.data.id,
+        messageId: response.data?.id,
         message: "Email sent successfully to info@dreamindiatravel.com",
       },
       { status: 200, headers }
     );
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    const errorStack = error instanceof Error ? error.stack : "";
-    
+    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
     console.error("❌ Email Error:", errorMessage);
-    console.error("Stack:", errorStack);
 
     return NextResponse.json(
       {
         status: "error",
         message: errorMessage,
-        debug: process.env.NODE_ENV === "development" ? errorMessage : undefined,
       },
       { status: 500, headers: { "Access-Control-Allow-Origin": "*" } }
     );
