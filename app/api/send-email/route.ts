@@ -1,5 +1,5 @@
 // File: app/api/send-email/route.ts
-// Email Sender for Next.js using Resend (Vercel Compatible)
+// Email Sender for Next.js 16 using Resend (Vercel Compatible)
 
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
@@ -27,17 +27,18 @@ export async function POST(request: NextRequest) {
     };
 
     let data: Record<string, string> = {};
-    const contentType = request.headers.get("content-type");
+    const contentType = request.headers.get("content-type") || "";
 
-    if (contentType?.includes("application/json")) {
-      data = await request.json();
-    } else if (contentType?.includes("application/x-www-form-urlencoded")) {
+    if (contentType.includes("application/json")) {
+      const json = await request.json();
+      data = json;
+    } else if (contentType.includes("application/x-www-form-urlencoded")) {
       const text = await request.text();
       const params = new URLSearchParams(text);
       params.forEach((value, key) => {
         data[key] = value;
       });
-    } else if (contentType?.includes("multipart/form-data")) {
+    } else if (contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       formData.forEach((value, key) => {
         data[key] = String(value);
@@ -49,8 +50,8 @@ export async function POST(request: NextRequest) {
     let messageBody = "New Lead Details:\n";
     messageBody += "---------------------------------\n";
 
-    Object.entries(data).forEach(([key, value]) => {
-      if (key.startsWith("_")) return;
+    for (const [key, value] of Object.entries(data)) {
+      if (key.startsWith("_")) continue;
 
       const cleanKey = key
         .replace(/_/g, " ")
@@ -59,7 +60,7 @@ export async function POST(request: NextRequest) {
         .join(" ");
 
       messageBody += `${cleanKey}: ${String(value)}\n`;
-    });
+    }
     messageBody += "---------------------------------\n";
 
     const userEmail = data.email || data.Email_Address || data.user_email || "";
@@ -77,6 +78,8 @@ export async function POST(request: NextRequest) {
       </div>
     `;
 
+    console.log("🚀 Sending email to:", TO_EMAIL);
+    
     const response = await resend.emails.send({
       from: FROM_EMAIL,
       to: TO_EMAIL,
@@ -87,8 +90,11 @@ export async function POST(request: NextRequest) {
     });
 
     if (response.error) {
+      console.error("❌ Resend error:", response.error);
       throw new Error(response.error.message || "Failed to send email");
     }
+
+    console.log("✅ Email sent successfully!");
 
     return NextResponse.json(
       {
@@ -100,7 +106,7 @@ export async function POST(request: NextRequest) {
     );
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("Email Error:", errorMessage);
+    console.error("❌ Email error:", errorMessage);
 
     return NextResponse.json(
       {
