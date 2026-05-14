@@ -4,6 +4,9 @@ import { NextRequest, NextResponse } from 'next/server';
 /**
  * Test endpoint to verify SMTP connection
  * 
+ * IMPORTANT: export const dynamic = 'force-dynamic' is required
+ * for Vercel deployments with static export (output: export)
+ * 
  * Usage: GET /api/test-email
  * 
  * Returns:
@@ -11,11 +14,17 @@ import { NextRequest, NextResponse } from 'next/server';
  * - { success: false, error: "..." } if it fails
  */
 
+// ============================================
+// IMPORTANT: Allow dynamic API routes
+// This is required for Vercel deployments with static export
+// ============================================
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🔍 Testing SMTP connection...');
     console.log('Host: mail.dreamindiatravel.com');
-    console.log('Port: 587');
+    console.log('Port: 465 (SSL)');
     console.log('User:', process.env.EMAIL_USER ? '✓ Set' : '✗ Not set');
     console.log('Pass:', process.env.EMAIL_PASSWORD ? '✓ Set' : '✗ Not set');
 
@@ -27,7 +36,8 @@ export async function GET(request: NextRequest) {
           error: 'Missing environment variables',
           details: {
             EMAIL_USER: process.env.EMAIL_USER ? 'Set' : 'Missing',
-            EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? 'Set' : 'Missing'
+            EMAIL_PASSWORD: process.env.EMAIL_PASSWORD ? 'Set' : 'Missing',
+            help: 'Go to Vercel Project Settings > Environment Variables and add EMAIL_USER and EMAIL_PASSWORD'
           }
         },
         { status: 500 }
@@ -36,17 +46,14 @@ export async function GET(request: NextRequest) {
 
     const transporter = nodemailer.createTransport({
       host: 'mail.dreamindiatravel.com',
-      port: 587,
-      secure: false,
+      port: 465,
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASSWORD,
       },
       connectionTimeout: 10000,
       socketTimeout: 10000,
-      tls: {
-        rejectUnauthorized: false
-      }
     });
 
     // Verify connection
@@ -60,7 +67,8 @@ export async function GET(request: NextRequest) {
       message: 'SMTP connection successful!',
       details: {
         host: 'mail.dreamindiatravel.com',
-        port: 587,
+        port: 465,
+        security: 'SSL/TLS',
         user: process.env.EMAIL_USER,
         timestamp: new Date().toISOString()
       }
@@ -78,7 +86,7 @@ export async function GET(request: NextRequest) {
         code: errorCode,
         details: {
           host: 'mail.dreamindiatravel.com',
-          port: 587,
+          port: 465,
           user: process.env.EMAIL_USER,
           troubleshooting: getTroubleshootingMessage(errorMessage, errorCode)
         }
@@ -93,13 +101,16 @@ function getTroubleshootingMessage(errorMessage: string, errorCode: string): str
     return 'Check if email address and password are correct in Vercel environment variables';
   }
   if (errorMessage.includes('ECONNREFUSED') || errorMessage.includes('connect')) {
-    return 'Host unreachable. Try using port 465 with secure: true instead, or check if mail.dreamindiatravel.com is correct';
+    return 'Host unreachable. Check if mail.dreamindiatravel.com is correct or contact your hosting provider';
   }
   if (errorMessage.includes('ETIMEDOUT') || errorMessage.includes('timeout')) {
-    return 'Connection timeout. Check your network or increase timeout values';
+    return 'Connection timeout. The SMTP server is not responding. Check your network or contact hosting support';
   }
   if (errorMessage.includes('undefined')) {
     return 'Environment variables not properly set. Make sure EMAIL_USER and EMAIL_PASSWORD are in Vercel Settings';
+  }
+  if (errorMessage.includes('certificate')) {
+    return 'SSL certificate issue. Try adding tls: { rejectUnauthorized: false } to your transporter config';
   }
   return 'Check Vercel logs for detailed error information';
 }
