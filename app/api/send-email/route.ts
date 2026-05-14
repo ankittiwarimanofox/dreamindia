@@ -2,12 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
 
 // ============================================
-// IMPORTANT: Allow dynamic API routes
-// This is required for Vercel deployments with static export
-// ============================================
-export const dynamic = 'force-dynamic';
-
-// ============================================
 // cPanel CUSTOM SMTP CONFIGURATION
 // Based on your cPanel Mail Client Settings
 // ============================================
@@ -20,8 +14,6 @@ const transporter = nodemailer.createTransport({
     user: process.env.EMAIL_USER,      // info@dreamindiatravel.com
     pass: process.env.EMAIL_PASSWORD,  // Your email password
   },
-  connectionTimeout: 10000,
-  socketTimeout: 10000,
 });
 
 // ============================================
@@ -47,18 +39,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
-      );
-    }
-
-    // Check if environment variables are set
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
-      console.error('❌ Missing environment variables');
-      return NextResponse.json(
-        { 
-          error: 'Email service is not configured. Please contact the site administrator.',
-          details: 'EMAIL_USER or EMAIL_PASSWORD not set'
-        },
-        { status: 500 }
       );
     }
 
@@ -204,14 +184,8 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('❌ Email sending error:', error);
     
-    // Detailed logging for debugging
+    // Provide more helpful error messages
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-    console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
-    console.error('Full error details:', error);
-    console.error('Environment variables check:');
-    console.error('EMAIL_USER exists:', !!process.env.EMAIL_USER);
-    console.error('EMAIL_PASSWORD exists:', !!process.env.EMAIL_PASSWORD);
-    console.error('NODE_ENV:', process.env.NODE_ENV);
     
     return NextResponse.json(
       { 
