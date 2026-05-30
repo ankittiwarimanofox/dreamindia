@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, ChangeEvent } from 'react';
+import { CheckCircle2 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from "@/app/components/Footer";
 
@@ -10,6 +11,7 @@ const ContactPage = () => {
     phone: '',
     message: ''
   });
+  const [formStatus, setFormStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -18,24 +20,23 @@ const ContactPage = () => {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setFormStatus("loading");
+
     try {
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
+      const res = await fetch("https://formspree.io/f/xpqnnbgn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(formData),
       });
-      
-      if (response.ok) {
-        alert("Thank you for reaching out! Our team will respond shortly.");
+
+      if (res.ok) {
+        setFormStatus("success");
         setFormData({ name: '', email: '', phone: '', message: '' });
       } else {
-        alert("Failed to send message. Please try again.");
+        setFormStatus("error");
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert("An error occurred. Please try again.");
+    } catch {
+      setFormStatus("error");
     }
   };
 
@@ -63,16 +64,16 @@ const ContactPage = () => {
         </div>
       </section>
 
-      {/* --- 2. INFO CARDS (Centered & Aligned) --- */}
+      {/* --- 2. INFO CARDS --- */}
       <section className="max-w-7xl mx-auto px-6 lg:px-12 -mt-16 relative z-30">
         <div className="flex flex-wrap justify-center gap-8">
           {[
             { 
-              icon: "📞", 
-              label: "Enquiry Line", 
-              info: <a href="tel:+919530609262" className="hover:text-[#FFA524] transition-colors">9530609262</a>, 
-              color: "border-[#FFA524]" 
-            },
+  icon: "📞", 
+  label: "Enquiry Line", 
+  info: <><a href="tel:+919530609262" className="hover:text-[#FFA524] transition-colors">9530609262</a> / <a href="tel:+918360609668" className="hover:text-[#FFA524] transition-colors">8360609668</a></>, 
+  color: "border-[#FFA524]" 
+},
             { 
               icon: "✉️", 
               label: "Official Email", 
@@ -102,69 +103,92 @@ const ContactPage = () => {
               Our experts are ready to craft your personalized Himalayan itinerary.
             </p>
           </div>
-          
-          {/* Form now uses the Sleekhost API endpoint */}
-          <form 
-            onSubmit={handleSubmit}
-            className="space-y-10"
-          >
-            <div className="border-b-2 border-slate-100 focus-within:border-[#FFA524] transition-colors pb-2">
-              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Full Name</label>
-              <input 
-                type="text" 
-                name="name" 
-                required 
-                value={formData.name}
-                onChange={handleInputChange}
-                className="w-full bg-transparent text-xl font-bold outline-none" 
-                placeholder="Your Name" 
-              />
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="border-b-2 border-slate-100 focus-within:border-[#00AEEF] transition-colors pb-2">
-                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Email Address</label>
-                <input 
-                  type="email" 
-                  name="email" 
-                  required 
-                  value={formData.email}
-                  onChange={handleInputChange}
-                  className="w-full bg-transparent text-xl font-bold outline-none" 
-                  placeholder="mail@example.com" 
-                />
+          {/* ── Success State ── */}
+          {formStatus === "success" ? (
+            <div className="py-16 flex flex-col items-start gap-6">
+              <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="text-green-500" size={40} />
               </div>
+              <h3 className="text-3xl font-black text-[#004381] uppercase tracking-tight">Message Sent!</h3>
+              <p className="text-slate-500 font-medium">Thank you for reaching out! Our team will respond shortly.</p>
+              <button
+                onClick={() => setFormStatus("idle")}
+                className="text-sm font-black uppercase tracking-widest text-[#FFA524] hover:underline"
+              >
+                Send Another Message
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-10">
               <div className="border-b-2 border-slate-100 focus-within:border-[#FFA524] transition-colors pb-2">
-                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Phone Number</label>
+                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Full Name</label>
                 <input 
-                  type="tel" 
-                  name="phone" 
+                  type="text" 
+                  name="name" 
                   required 
-                  value={formData.phone}
+                  value={formData.name}
                   onChange={handleInputChange}
                   className="w-full bg-transparent text-xl font-bold outline-none" 
-                  placeholder="+91 00000 00000" 
+                  placeholder="Your Name" 
                 />
               </div>
-            </div>
 
-            <div className="space-y-4">
-              <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Message Details</label>
-              <textarea 
-                name="message" 
-                required 
-                rows={5} 
-                value={formData.message}
-                onChange={handleInputChange}
-                className="w-full bg-slate-50 p-6 rounded-[1.5rem] outline-none focus:ring-2 focus:ring-[#FFA524] transition-all resize-none font-bold" 
-                placeholder="Tell us about your dream destination..." 
-              />
-            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <div className="border-b-2 border-slate-100 focus-within:border-[#00AEEF] transition-colors pb-2">
+                  <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Email Address</label>
+                  <input 
+                    type="email" 
+                    name="email" 
+                    required 
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    className="w-full bg-transparent text-xl font-bold outline-none" 
+                    placeholder="mail@example.com" 
+                  />
+                </div>
+                <div className="border-b-2 border-slate-100 focus-within:border-[#FFA524] transition-colors pb-2">
+                  <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Phone Number</label>
+                  <input 
+                    type="tel" 
+                    name="phone" 
+                    required 
+                    value={formData.phone}
+                    onChange={handleInputChange}
+                    className="w-full bg-transparent text-xl font-bold outline-none" 
+                    placeholder="+91 00000 00000" 
+                  />
+                </div>
+              </div>
 
-            <button type="submit" className="bg-[#FFA524] text-white px-12 py-5 rounded-2xl font-black text-xs tracking-[0.3em] uppercase hover:bg-[#004381] transition-all shadow-xl shadow-[#FFA524]/20 active:scale-95">
-              Send Message
-            </button>
-          </form>
+              <div className="space-y-4">
+                <label className="block text-[9px] font-black text-slate-400 uppercase tracking-widest">Message Details</label>
+                <textarea 
+                  name="message" 
+                  required 
+                  rows={5} 
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  className="w-full bg-slate-50 p-6 rounded-[1.5rem] outline-none focus:ring-2 focus:ring-[#FFA524] transition-all resize-none font-bold" 
+                  placeholder="Tell us about your dream destination..." 
+                />
+              </div>
+
+              {formStatus === "error" && (
+                <p className="text-red-500 text-sm font-bold">
+                  Something went wrong. Please try again.
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={formStatus === "loading"}
+                className="bg-[#FFA524] text-white px-12 py-5 rounded-2xl font-black text-xs tracking-[0.3em] uppercase hover:bg-[#004381] transition-all shadow-xl shadow-[#FFA524]/20 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {formStatus === "loading" ? "SENDING..." : "SEND MESSAGE"}
+              </button>
+            </form>
+          )}
         </div>
 
         <div className="hidden lg:block">

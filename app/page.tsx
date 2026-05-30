@@ -4,13 +4,13 @@ import React, { useRef, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Star, MapPin, ArrowRight, Phone, Mail, Plane, Hotel, Map, 
-  Bus, Utensils, Clock, Quote
+  Bus, Utensils, Clock, Quote, CheckCircle2
 } from 'lucide-react';
 import { FiArrowLeft, FiArrowRight, FiArrowUpRight } from 'react-icons/fi';
 import Link from 'next/link';
 import Navbar from './components/Navbar';
-
 import Footer from "@/app/components/Footer";
+
 // --- DATA CONSTANTS ---
 
 const heroSlides = [
@@ -119,13 +119,14 @@ export default function Home() {
   const [activeCard, setActiveCard] = useState(0);
   const [currentSlide, setCurrentSlide] = useState(0);
 
-  // Form State
+  // ── Form State ──────────────────────────────────────────────────────────────
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     phone: '',
     message: ''
   });
+  const [formStatus, setFormStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -134,33 +135,30 @@ export default function Home() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormStatus("loading");
+
     try {
-      const response = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
+      const res = await fetch("https://formspree.io/f/xpqnnbgn", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(formData),
       });
-      
-      if (response.ok) {
-        alert("Thank you! Our team will respond quickly.");
+
+      if (res.ok) {
+        setFormStatus("success");
         setFormData({ name: '', email: '', phone: '', message: '' });
       } else {
-        alert("Failed to send message. Please try again.");
+        setFormStatus("error");
       }
-    } catch (error) {
-      console.error('Error:', error);
-      alert("An error occurred. Please try again.");
+    } catch {
+      setFormStatus("error");
     }
   };
+  // ───────────────────────────────────────────────────────────────────────────
 
-  // Smooth scroll function for the Explore button
   const scrollToServices = () => {
     const element = document.getElementById('services-section');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
+    if (element) element.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -197,7 +195,6 @@ export default function Home() {
         <div className="relative z-10 w-full max-w-7xl mx-auto px-6 md:px-12 text-white mt-[-10vh]">
           <motion.div initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }}>
             <motion.p initial={{ letterSpacing: "0.1em", opacity: 0 }} animate={{ letterSpacing: "0.3em", opacity: 1 }} className="text-[#C38E2D] font-bold text-sm mb-6 uppercase">
-            
             </motion.p>
             <h1 className="text-6xl md:text-8xl font-black leading-[1] mb-8 uppercase tracking-tighter">
               DREAM <br />
@@ -209,7 +206,6 @@ export default function Home() {
               </p>
             </div>
             <div className="flex flex-col md:flex-row items-center gap-4 max-w-2xl">
-              
               <button 
                 onClick={scrollToServices}
                 className="w-full md:w-auto bg-[#C38E2D] text-white font-bold px-10 py-4 rounded-xl flex items-center justify-center gap-2"
@@ -234,7 +230,7 @@ export default function Home() {
           <div>
             <h2 className="text-[#004381] text-5xl font-bold mb-6">Crafting Experiences with <span className="text-[#C38E2D] italic">Passion</span></h2>
             <p className="text-gray-600 text-lg mb-8">At Dream India Travel, we believe every journey tells a story. Our team works tirelessly to bring you the best of India.</p>
-           <Link href="/Contact">
+            <Link href="/Contact">
               <button className="bg-[#004381] text-white px-10 py-4 rounded-xl font-bold flex items-center gap-2 hover:bg-[#003366] transition-colors">
                 Learn More <ArrowRight size={20}/>
               </button>
@@ -243,7 +239,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 3. FOOTSTEPS TIMELINE - HORIZONTAL LAYOUT */}
+      {/* 3. FOOTSTEPS TIMELINE */}
       <section className="py-12 md:py-24 relative overflow-hidden bg-white">
         <div className="absolute top-10 md:top-20 left-5 md:left-10 opacity-[0.03] select-none pointer-events-none z-0">
           <h3 className="text-[20vw] md:text-[15vw] font-black text-[#004381] leading-none">Discover</h3>
@@ -252,25 +248,15 @@ export default function Home() {
           <div className="mb-8 md:mb-20">
             <h2 className="text-3xl md:text-5xl lg:text-6xl font-black text-[#004381] text-center">NEVER ENDING <span className="text-[#C38E2D]">FOOTSTEPS</span></h2>
           </div>
-          
-          {/* Horizontal Layout for All Devices */}
           <div className="relative pt-10 pb-20">
-            {/* SVG Curve - Hidden on Mobile */}
             <div className="hidden md:block">
               <svg className="absolute top-1/2 left-0 w-full h-[150px] -translate-y-1/2 opacity-20" viewBox="0 0 1440 150">
                 <motion.path initial={{ pathLength: 0 }} whileInView={{ pathLength: 1 }} transition={{ duration: 3 }} d="M-50,75 C200,-50 400,200 720,75 C1040,-50 1240,200 1490,75" stroke="#004381" strokeWidth="2" strokeDasharray="10 10" fill="none" />
               </svg>
             </div>
-            
             <div className="flex flex-row gap-4 md:gap-24 relative z-20 justify-between md:justify-center items-start md:items-center overflow-x-auto md:overflow-visible px-2 md:px-0 pb-4 md:pb-0">
               {timelinePoints.map((point, i) => (
-                <motion.div 
-                  key={i} 
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.1 }}
-                  className="flex flex-col items-center flex-shrink-0"
-                >
+                <motion.div key={i} initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} className="flex flex-col items-center flex-shrink-0">
                   <motion.div whileHover={{ scale: 1.15 }} className="w-16 md:w-24 h-16 md:h-24 bg-white rounded-full overflow-hidden shadow-2xl mb-3 md:mb-8 border-4 border-slate-50">
                     <img src={point.img} alt={point.country} className="w-full h-full object-cover" />
                   </motion.div>
@@ -327,7 +313,6 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-6 mb-12">
           <h2 className="text-[#004381] text-5xl font-extrabold mb-4">Explore Our <span className="text-[#1D70B7]">Best Tours</span></h2>
         </div>
-        
         <div id="tour-slider" className="flex w-fit animate-infinite-scroll gap-8 px-8 pb-12 hover:[animation-play-state:paused] no-scrollbar scroll-smooth">
           {[...tours, ...tours, ...tours].map((tour, index) => (
             <div key={index} className="w-[320px] md:w-[420px] bg-white rounded-[40px] overflow-hidden shadow-lg border border-gray-100 flex-shrink-0 group transition-all duration-500 hover:-translate-y-2">
@@ -353,7 +338,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 6. SERVICES - Added id="services-section" */}
+      {/* 6. SERVICES */}
       <section id="services-section" className="py-24 bg-white">
         <div className="max-w-7xl mx-auto px-6 lg:px-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <div className="relative w-full h-[500px]">
@@ -393,49 +378,27 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 8. REVIEW & TESTIMONIALS SECTION */}
+      {/* 8. TESTIMONIALS */}
       <section className="py-24 bg-slate-50 relative overflow-hidden">
         <div className="absolute top-0 right-0 w-96 h-96 bg-[#004381]/5 rounded-full blur-[100px] -mr-48 -mt-48" />
         <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#C38E2D]/5 rounded-full blur-[100px] -ml-48 -mb-48" />
-
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <div className="text-center mb-16 space-y-4">
-            <motion.h2 
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="text-5xl md:text-6xl font-black text-[#004381] uppercase tracking-tighter"
-            >
+            <motion.h2 initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="text-5xl md:text-6xl font-black text-[#004381] uppercase tracking-tighter">
               Review & <span className="text-slate-900">Testimonials</span>
             </motion.h2>
-            <motion.p 
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="text-xl md:text-2xl font-medium text-[#C38E2D] italic font-serif"
-            >
+            <motion.p initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: 0.2 }} className="text-xl md:text-2xl font-medium text-[#C38E2D] italic font-serif">
               Top Reviews for Dream India
             </motion.p>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
             {testimonials.map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: index * 0.1 }}
-                className="flex flex-col items-center"
-              >
+              <motion.div key={index} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: index * 0.1 }} className="flex flex-col items-center">
                 <div className="bg-white p-8 md:p-12 rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-slate-100 relative mb-8 w-full group hover:shadow-xl transition-all duration-500">
                   <Quote className="absolute top-8 right-8 text-[#004381]/10 group-hover:text-[#004381]/20 transition-colors" size={60} />
                   <h3 className="text-xl md:text-2xl font-black text-[#004381] mb-4 uppercase tracking-tight">{item.title}</h3>
                   <div className="flex gap-1 mb-6">
-                    {[...Array(item.rating)].map((_, i) => (
-                      <Star key={i} size={18} fill="#C38E2D" className="text-[#C38E2D]" />
-                    ))}
+                    {[...Array(item.rating)].map((_, i) => <Star key={i} size={18} fill="#C38E2D" className="text-[#C38E2D]" />)}
                   </div>
                   <p className="text-slate-500 text-sm md:text-base leading-relaxed font-medium italic mb-6">"{item.content}"</p>
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-300">{item.date}</p>
@@ -457,93 +420,115 @@ export default function Home() {
         </div>
       </section>
 
-      {/* 9. GET IN TOUCH SECTION (Under Reviews) */}
+      {/* 9. GET IN TOUCH — powered by Formspree */}
       <section className="py-24 bg-white overflow-hidden relative border-t border-slate-100">
-      <div className="max-w-7xl mx-auto px-6 relative z-10">
-        <div className="mb-12">
-          <h2 className="text-6xl font-black text-[#1D70B7] tracking-tighter uppercase mb-2">
-            Get In <span className="text-[#1D70B7]">Touch</span>
-          </h2>
-          <p className="text-[#C38E2D] text-2xl font-medium italic font-serif">
-            our team will respond quickly to help you book your dream tour.
-          </p>
+        <div className="max-w-7xl mx-auto px-6 relative z-10">
+          <div className="mb-12">
+            <h2 className="text-6xl font-black text-[#1D70B7] tracking-tighter uppercase mb-2">
+              Get In <span className="text-[#1D70B7]">Touch</span>
+            </h2>
+            <p className="text-[#C38E2D] text-2xl font-medium italic font-serif">
+              our team will respond quickly to help you book your dream tour.
+            </p>
+          </div>
+
+          {/* ── Success State ── */}
+          {formStatus === "success" ? (
+            <div className="max-w-6xl py-16 flex flex-col items-center gap-6 text-center">
+              <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center">
+                <CheckCircle2 className="text-green-500" size={40} />
+              </div>
+              <h3 className="text-3xl font-black text-[#004381] uppercase tracking-tight">Message Sent!</h3>
+              <p className="text-gray-500 text-lg font-medium">Thank you! Our team will respond quickly.</p>
+              <button
+                onClick={() => setFormStatus("idle")}
+                className="mt-4 text-sm font-black uppercase tracking-widest text-[#C38E2D] hover:underline"
+              >
+                Send Another Message
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="max-w-6xl space-y-8">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">Name <span className="text-red-500">*</span></label>
+                <input 
+                  type="text" 
+                  name="name"
+                  required
+                  placeholder="Enter Your Name" 
+                  className="w-full border-2 border-[#C38E2D] rounded-xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[#C38E2D]/20 transition-all text-gray-800 placeholder:text-gray-400"
+                  onChange={handleInputChange}
+                  value={formData.name}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">Email <span className="text-red-500">*</span></label>
+                <input 
+                  type="email" 
+                  name="email"
+                  required
+                  placeholder="Enter Your Mail" 
+                  className="w-full border-2 border-[#C38E2D] rounded-xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[#C38E2D]/20 transition-all text-gray-800 placeholder:text-gray-400"
+                  onChange={handleInputChange}
+                  value={formData.email}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">Phone <span className="text-red-500">*</span></label>
+                <input 
+                  type="tel" 
+                  name="phone"
+                  required
+                  placeholder="Enter Your Phone Number" 
+                  className="w-full border-2 border-[#C38E2D] rounded-xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[#C38E2D]/20 transition-all text-gray-800 placeholder:text-gray-400"
+                  onChange={handleInputChange}
+                  value={formData.phone}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-700">Your Message <span className="text-red-500">*</span></label>
+                <textarea 
+                  name="message"
+                  required
+                  rows={5}
+                  placeholder="Enter Your Message" 
+                  className="w-full border-2 border-[#C38E2D] rounded-xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[#C38E2D]/20 transition-all text-gray-800 placeholder:text-gray-400 resize-none"
+                  onChange={handleInputChange}
+                  value={formData.message}
+                />
+              </div>
+
+              {formStatus === "error" && (
+                <p className="text-red-500 text-sm font-bold">
+                  Something went wrong. Please try again.
+                </p>
+              )}
+
+              <button 
+                type="submit"
+                disabled={formStatus === "loading"}
+                className="bg-[#FA9B21] text-white font-bold px-12 py-4 rounded-lg shadow-lg hover:bg-[#e88a10] transition-all transform hover:scale-105 active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+              >
+                {formStatus === "loading" ? "Sending..." : "Submit"}
+              </button>
+            </form>
+          )}
         </div>
 
-        <form 
-          onSubmit={handleSubmit}
-          className="max-w-6xl space-y-8"
-        >
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700">Name <span className="text-red-500">*</span></label>
-            <input 
-              type="text" 
-              name="name"
-              required
-              placeholder="Enter Your Name" 
-              className="w-full border-2 border-[#C38E2D] rounded-xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[#C38E2D]/20 transition-all text-gray-800 placeholder:text-gray-400"
-              onChange={handleInputChange}
-              value={formData.name}
-            />
-          </div>
+        {/* Background Decoration */}
+        <div className="absolute right-[-5%] bottom-0 opacity-10 pointer-events-none select-none w-1/3">
+          <img 
+            src="https://www.transparentpng.com/download/monuments/S8VwzO-monuments-transparent-background.png" 
+            alt="monuments" 
+            className="grayscale" 
+          />
+        </div>
+      </section>
 
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700">Email <span className="text-red-500">*</span></label>
-            <input 
-              type="email" 
-              name="email"
-              required
-              placeholder="Enter Your Mail" 
-              className="w-full border-2 border-[#C38E2D] rounded-xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[#C38E2D]/20 transition-all text-gray-800 placeholder:text-gray-400"
-              onChange={handleInputChange}
-              value={formData.email}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700">Phone <span className="text-red-500">*</span></label>
-            <input 
-              type="tel" 
-              name="phone"
-              required
-              placeholder="Enter Your Phone Number" 
-              className="w-full border-2 border-[#C38E2D] rounded-xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[#C38E2D]/20 transition-all text-gray-800 placeholder:text-gray-400"
-              onChange={handleInputChange}
-              value={formData.phone}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-bold text-gray-700">Your Message <span className="text-red-500">*</span></label>
-            <textarea 
-              name="message"
-              required
-              rows={5}
-              placeholder="Enter Your Message" 
-              className="w-full border-2 border-[#C38E2D] rounded-xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-[#C38E2D]/20 transition-all text-gray-800 placeholder:text-gray-400 resize-none"
-              onChange={handleInputChange}
-              value={formData.message}
-            ></textarea>
-          </div>
-
-          <button 
-            type="submit" 
-            className="bg-[#FA9B21] text-white font-bold px-12 py-4 rounded-lg shadow-lg hover:bg-[#e88a10] transition-all transform hover:scale-105 active:scale-95"
-          >
-            Submit
-          </button>
-        </form>
-      </div>
-
-      {/* Background Decoration */}
-      <div className="absolute right-[-5%] bottom-0 opacity-10 pointer-events-none select-none w-1/3">
-        <img 
-          src="https://www.transparentpng.com/download/monuments/S8VwzO-monuments-transparent-background.png" 
-          alt="monuments" 
-          className="grayscale" 
-        />
-      </div>
-    </section>
-    <Footer />
+      <Footer />
     </main>
   );
 }

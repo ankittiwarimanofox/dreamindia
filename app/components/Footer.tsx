@@ -5,18 +5,17 @@ import Link from 'next/link';
 import { 
   Phone, 
   Mail, 
-  Percent, 
+  MapPin,
   ArrowRight,
   ShieldCheck,
-  Camera,   // Replacement for Instagram
-  Share2,   // Replacement for Facebook
-  PlayCircle // Replacement for Youtube
+  Camera,
+  Share2,
+  PlayCircle
 } from 'lucide-react';
 
 const EnhancedFooter = () => {
   return (
     <footer className="relative bg-[#020617] text-white pt-24 pb-12 overflow-hidden border-t border-white/5">
-      {/* Decorative background glow */}
       <div className="absolute top-0 left-1/4 w-96 h-96 bg-[#1D70B7]/10 rounded-full blur-[120px] -z-10" />
       
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-16 mb-20 relative z-10">
@@ -78,8 +77,11 @@ const EnhancedFooter = () => {
               </div>
               <div>
                 <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Call Us</p>
-                <a href="tel:+919530609262" className="text-white font-bold text-lg hover:text-[#FA9B21] transition-colors">
+                <a href="tel:+919530609262" className="text-white font-bold text-lg hover:text-[#FA9B21] transition-colors block">
                   9530609262
+                </a>
+                <a href="tel:+918360609668" className="text-white font-bold text-lg hover:text-[#FA9B21] transition-colors block">
+                  8360609668
                 </a>
               </div>
             </div>
@@ -98,11 +100,13 @@ const EnhancedFooter = () => {
 
             <div className="flex gap-4 group">
               <div className="w-10 h-10 bg-[#1D70B7]/20 rounded-xl flex items-center justify-center text-[#1D70B7] group-hover:bg-[#1D70B7] group-hover:text-white transition-all flex-shrink-0">
-                <Percent size={18} />
+                <MapPin size={18} />
               </div>
               <div>
-                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Tax Compliance</p>
-                <p className="text-white font-bold tracking-widest text-sm">03DIQPB9937QIZF</p>
+                <p className="text-[10px] text-gray-500 font-bold uppercase tracking-widest">Address</p>
+                <p className="text-white font-bold text-sm leading-relaxed">
+  Travel Agency in Mandi, Near Gram Panchayat Bhawan, Barsu (Bagla), Tehsil Balh, District Mandi, Himachal Pradesh - 175021
+</p>
               </div>
             </div>
           </div>
@@ -134,7 +138,6 @@ const EnhancedFooter = () => {
       <div className="max-w-7xl mx-auto px-6 border-t border-white/5 pt-12">
         <div className="flex flex-col lg:flex-row justify-between items-center gap-8">
           
-          {/* Using guaranteed safe icons */}
           <div className="flex items-center gap-4">
             <a href="https://www.instagram.com/dreamindiatourtravel.2226/" target="_blank" className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-gray-400 hover:bg-[#FA9B21] hover:text-white transition-all">
               <Camera size={20} />
