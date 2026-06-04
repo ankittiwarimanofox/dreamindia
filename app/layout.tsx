@@ -20,6 +20,10 @@ export const metadata: Metadata = {
     "Discover India with Dream India Travel. Premium tour packages, hotel bookings, and customized itineraries for Shimla, Manali, Himalayan tours, and more. Expert travel planning with 24/7 support.",
 };
 
+<head>
+  <meta name="google-site-verification" content="Cyv4TqRubo2WYYzM50JM23534AXMFFCms3rjkH0JEdw" />
+</head>
+
 export default function RootLayout({
   children,
 }: Readonly<{
