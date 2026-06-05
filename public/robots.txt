@@ -1,0 +1,22 @@
+# ============================================================
+# robots.txt — Dream India Travel
+# https://www.dreamindiatravel.com
+# ============================================================
+
+# Allow all well-behaved crawlers
+User-agent: *
+Allow: /
+
+# Block API routes (server-side only; not useful for crawlers)
+Disallow: /api/
+
+# Block internal Next.js assets
+Disallow: /_next/
+
+# Block the Google site-verification HTML file (no SEO value)
+Disallow: /googled88aeca771db9b35.html
+
+# ============================================================
+# Sitemap location
+# ============================================================
+Sitemap: https://www.dreamindiatravel.com/sitemap.xml
