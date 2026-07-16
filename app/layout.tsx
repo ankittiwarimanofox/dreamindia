@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   description:
     "Discover India with Dream India Travel. Premium tour packages, hotel bookings, and customized itineraries for Shimla, Manali, Himalayan tours, and more. Expert travel planning with 24/7 support.",
   verification: {
-    google: "Cyv4TqRubo2WYYzM50JM23534AXMFFCms3rjkH0JEdw",
+    google: "wTKfPAHPW2WzWcjPhDJRdsCijwNc156pp5Yz4WLTAec",
   },
 };
 
